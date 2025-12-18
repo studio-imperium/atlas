@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"atlas/atlas"
 )
 
 func request(w http.ResponseWriter, r *http.Request) {
