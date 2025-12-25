@@ -5,15 +5,12 @@ import (
 	"math/rand"
 )
 
-func generatePoints(n int, radius float64, seed int64) []Point {
+func generatePoints(n int, radius int, seed int64) []Point {
 	r := rand.New(rand.NewSource(seed))
 	points := []Point{}
 	
 	for i := 0; i < n; i++ {
-		points = append(points, Point{
-			x: radius * r.Float64(),
-			y: radius * r.Float64(),
-		})
+		points = append(points, NewPoint(float64(radius) * r.Float64(), float64(radius) * r.Float64()))
 	}
 	
 	return points
@@ -34,11 +31,11 @@ func addPoint(triangles []Triangle, point Point, points *[]Point) []Triangle {
 }
 
 func CreateTriangles(points []Point) []Triangle {
-	maxY := points[0].y
-	maxX := points[0].x
+	maxY := points[0].Y
+	maxX := points[0].X
 	for _, point := range points {
-		maxY = math.Max(maxY, point.y)
-		maxX = math.Max(maxX, point.x)
+		maxY = math.Max(maxY, point.Y)
+		maxX = math.Max(maxX, point.X)
 	}
 	
 	addedPoints := []Point{

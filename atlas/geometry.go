@@ -2,72 +2,82 @@ package atlas
 
 import (
 	"math"
-	"fmt"
 )
 
-type Point struct {
-	x float64
-	y float64
+type Vector interface {
+	getX() float64
+	getY() float64
 }
 
-func distance(point1 Point, point2 Point) float64 {
-	return math.Pow(math.Pow((point1.x - point2.x), 2) +
-			math.Pow((point1.y - point2.y), 2), 0.5)
+type Point struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+func (point Point) getX() float64 {
+	return point.X
+}
+func (point Point) getY() float64 {
+	return point.Y
+}
+
+func distance(vector1 Vector, vector2 Vector) float64 {
+	return math.Pow(math.Pow(vector1.getX() - vector2.getX(), 2) + math.Pow(vector1.getY() - vector2.getY(), 2), 0.5)
 }
 
 func (point1 Point) add(point2 Point) Point {
 	return Point{
-		x: point1.x + point2.x,
-		y: point1.y + point2.y,
+		X: point1.X + point2.X,
+		Y: point1.Y + point2.Y,
 	}
 }
 
 func (point1 Point) subtract(point2 Point) Point {
 	return Point{
-		x: point1.x - point2.x,
-		y: point1.y - point2.y,
+		X: point1.X - point2.X,
+		Y: point1.Y - point2.Y,
 	}
 }
 
 func (point1 Point) multiply(point2 Point) Point {
 	return Point{
-		x: point1.x * point2.x,
-		y: point1.y * point2.y,
+		X: point1.X * point2.X,
+		Y: point1.Y * point2.Y,
 	}
 }
 
 func (point Point) sqr() Point {
 	return Point{
-		x: math.Pow(point.x, 2),
-		y: math.Pow(point.y, 2),
+		X: math.Pow(point.X, 2),
+		Y: math.Pow(point.Y, 2),
 	}
 }
 
 func (point1 Point) divide(point2 Point) Point {
 	return Point{
-		x: point1.x / point2.x,
-		y: point1.y / point2.y,
+		X: point1.X / point2.X,
+		Y: point1.Y / point2.Y,
 	}
 }
 
 func NewPoint(x float64, y float64) Point {
 	return Point{
-		x: x,
-		y: y,
+		X: x,
+		Y: y,
 	}
 }
 
 
 
 type Triangle struct {
-	points [3]Point
-	center Point
-	radius float64
+	Points [3]Point `json:"points"`
+	center Point `json:"center"`
+	radius float64 `json:"radius"`
 }
 
 func (triangle Triangle) IncludesPoint(point Point) bool {
-	for _, p := range triangle.points {
-		if p.x == point.x && p.y == point.y {
+	for _, p := range triangle.Points {
+		if p.X == point.X && p.Y == point.Y {
 			return true
 		}
 	}
@@ -92,18 +102,18 @@ func (triangle Triangle) reform(point Point, points *[]Point) []Triangle {
 	triangles := []Triangle{
 		NewTriangle([3]Point{
 			point,
-			triangle.points[0],
-			triangle.points[1],
+			triangle.Points[0],
+			triangle.Points[1],
 		}),
 		NewTriangle([3]Point{
 			point,
-			triangle.points[1],
-			triangle.points[2],
+			triangle.Points[1],
+			triangle.Points[2],
 		}),
 		NewTriangle([3]Point{
 			point,
-			triangle.points[2],
-			triangle.points[0],
+			triangle.Points[2],
+			triangle.Points[0],
 		}),
 	}
 	
@@ -117,16 +127,14 @@ func (triangle Triangle) reform(point Point, points *[]Point) []Triangle {
 }
 
 func circumcenter(points [3]Point) Point {
-	fmt.Println(points)
-	
 	p1 := points[0]
 	p2 := points[1]
 	p3 := points[2]
 	
-	a := -(p2.x - p1.x) / (p2.y - p1.y)
-	c := -(p3.x - p2.x) / (p3.y - p2.y)
-    b := ((p2.y + p1.y) / 2) - (a * (p2.x + p1.x) / 2)
-    d := ((p3.y + p2.y) / 2) - (c * (p3.x + p2.x) / 2)
+	a := -(p2.X - p1.X) / (p2.Y - p1.Y)
+	c := -(p3.X - p2.X) / (p3.Y - p2.Y)
+    b := ((p2.Y + p1.Y) / 2) - (a * (p2.X + p1.X) / 2)
+    d := ((p3.Y + p2.Y) / 2) - (c * (p3.X + p2.X) / 2)
 
     x := (d - b) / (a - c)
     y := a * x + b
@@ -135,15 +143,15 @@ func circumcenter(points [3]Point) Point {
         return circumcenter([3]Point{p2, p3, p1})
     }
 	return Point{
-		x: x,
-		y: y,
+		X: x,
+		Y: y,
 	}
 }
 
 
 func NewTriangle(points [3]Point) Triangle {
 	triangle := new(Triangle)
-	triangle.points = points
+	triangle.Points = points
 	triangle.center = circumcenter(points)
 	triangle.radius = distance(triangle.center, points[0])
 	

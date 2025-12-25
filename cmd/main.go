@@ -1,17 +1,92 @@
 package main
 
 import (
+	"log"
 	"fmt"
 	"net/http"
+	"atlas/atlas"
+	"github.com/gorilla/websocket"
 )
 
-func request(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r)
-	//atlas.GenerateData(n, radius, seed)
+var world *atlas.World
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func (r *http.Request) bool {
+		return true
+	},
+}
+
+func enableCors(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
+}
+
+type Client struct {
+	seen map[atlas.Point]bool
+}
+
+type Data struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+func (data Data) GetPoint() atlas.Point {
+	return atlas.NewPoint(float64(data.X), float64(data.Y))
+}
+
+func sendChunks(conn *websocket.Conn) {
+	client := Client{
+		seen: make(map[atlas.Point]bool),
+	}
+	
+	for {
+		json := Data{}
+		err := conn.ReadJSON(&json)
+		
+		if err != nil {
+			fmt.Println(err)
+			conn.Close()
+			return
+		}
+		
+		cell := world.GetNearestCell(atlas.NewPoint(json.X, json.Y))
+		
+		if !client.seen[cell.Origin] {
+			client.seen[cell.Origin] = true
+			err = conn.WriteJSON(cell)
+			
+			if err != nil {
+				fmt.Println(err)
+				conn.Close()
+				return
+			}
+		}
+	}
+	//out, err := json.Marshal(world.GetNearestCell(d.GetPoint()))
+	
+	//if err != nil {
+	//	fmt.Println("error parsing json")
+	//	return
+	//}
+	
+	//w.Header().Set("Content-Type", "application/json")
+	//w.Write([]byte(string(out)))
+}
+
+func handler (w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	
+	go sendChunks(conn)
 }
 
 func main() {
-	fmt.Println("Listening on 8081")
-	http.HandleFunc("/points", request)
-	http.ListenAndServe(":8081", nil)
+	world = atlas.GenerateWorld(100)
+	
+	fmt.Println("Listening on 8082")
+	http.HandleFunc("/atlas", handler)
+	log.Fatal(http.ListenAndServe(":8082", nil))
 }
