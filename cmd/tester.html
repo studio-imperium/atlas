@@ -1,0 +1,77 @@
+<html>
+	<head>
+		<title>Atlas package tester</title>
+		<style>
+			body {
+				display: flex;
+				width: 100vw;
+			}
+			div {
+				width: 50vw;
+			}
+		</style>
+	</head>
+	<body>
+		<div>
+			<input type="number" id="points" placeholder="points" onchange="changePoints()" value=""/>
+			<input type="number" id="seed" placeholder="seed" onchange="changeSeed()" value=""/>
+			<input type="number" id="radius" placeholder="radius" onchange="changeRadius()" value=""/>
+			<button onclick="generate()">
+				Generate triangles
+			</button>
+		</div>
+		<canvas>
+		<script>
+			let canvas = document.querySelector("canvas")
+			let context = canvas.getContext("2d")
+			let seed = 1
+			let points = 10
+			let radius = 500
+			
+			canvas.width = window.innerWidth / 2
+			canvas.height = window.innerHeight
+			
+			function drawTriangle(triangle) {
+				let points = triangle.points
+				
+				context.beginPath()
+				context.moveTo(points[0].x, points[0].y)
+				context.lineTo(points[1].x, points[1].y)
+				context.moveTo(points[1].x, points[1].y)
+				context.lineTo(points[2].x, points[2].y)
+				context.moveTo(points[2].x, points[2].y)
+				context.lineTo(points[0].x, points[0].y)
+				context.stroke()
+			}
+			
+			function changePoints() {
+				points = parseInt(document.getElementById("points").value)
+			}
+			function changeSeed() {
+				seed = parseInt(document.getElementById("seed").value)
+			}
+			function changeRadius() {
+				radius = parseInt(document.getElementById("radius").value)
+			}
+			
+			const generate = async() => {
+				let triangles = await (
+					await fetch("http://localhost:8081/points", {
+						"method" : "POST",
+						"body" : JSON.stringify({
+							points : points,
+							seed : seed,
+							radius : radius,
+						})
+					})
+				).json()
+				
+				context.clearRect(0, 0, canvas.width, canvas.height)
+				for (let triangle of triangles) {
+					drawTriangle(triangle)
+				}
+			}
+			generate()
+		</script>
+	</body>
+</html>

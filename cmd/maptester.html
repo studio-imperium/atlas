@@ -1,0 +1,236 @@
+<html style="padding: 0; margin: 0;">
+	<head>
+		<title>atlas.imperium</title>
+	</head>
+	<body style="padding: 0; margin: 0;">
+		<script src="assets/pixi.js"></script>
+		<script id="connector">
+			let CONNECTED = false
+			let socket
+			
+			const connect = () => {
+				socket = new WebSocket("ws://localhost:8082/atlas")
+				
+				function open() {
+					start()
+					CONNECTED = true
+				}
+				
+				function closed(e) {
+					console.log(e)
+					end("Connection failed")
+					CONNECTED = false
+				}
+				
+				function newCell(e) {
+					let cell = JSON.parse(e.data)
+					render(cell)
+				}
+				
+				socket.addEventListener("open", open)
+				socket.addEventListener("close", closed)
+				socket.addEventListener("error", closed)
+				socket.addEventListener("message", newCell)
+			}
+			
+			const sendCoordinates = (x, y) => {
+				if (CONNECTED && !seen[x + y*1000]) {
+					console.log("sending")
+					seen[x + y*1000] = true
+					socket.send(`{ "x": ${x}, "y": ${y} }`)
+				}
+			}
+			
+			const end = (message) => {
+				// document.getElementById("status").innerHTML = message
+			}
+			
+			const start = () => {
+				// document.getElementById("status").innerHTML = "Scroll to zoom out, move mouse to load cells"
+			}
+			
+			connect()
+		</script>
+		<script id="helper_functions">
+			let tileVariations = [
+				10,
+				6,
+				3,
+				13,
+				8,
+				6, 
+				6,
+				7,
+				7,
+			]
+			function randi() {
+				return Math.floor(1000 * Math.random())
+			}
+
+			function force2Digits(n) {
+				let str = n.toString()
+				return str.padStart(2, "0")
+			}
+
+			function codify(tileInt, variation = randi() % tileVariations[tileInt]) {
+				let code = force2Digits(tileInt)
+				return code + "_" + force2Digits(variation)
+			}
+		</script>
+		<script id="art">
+			const Application = PIXI.Application
+			const Texture = PIXI.Texture
+			const Assets = PIXI.Assets
+
+			const SCALE = 6
+			const PIXEL = 8
+
+			let app = new Application
+			app.stage.scale = SCALE
+			window.__PIXI_DEVTOOLS__ = {
+			  app: app
+			}
+
+			let seen = {}
+			async function render(cell) {
+				const tileSheet = await Assets.load("tiles")
+				const tileContainer = new PIXI.ParticleContainer({
+					dynamicProperties: {
+						position: false,
+						vertex: false,
+						rotation: false,
+						color: false,
+					}
+				})
+
+				function addTile(x, y, value) {
+					seen[x + y * 1000] = true
+					const code = codify(value)
+					const base = codify(value, 0)
+					const X = x * PIXEL
+					const Y = y * PIXEL
+					
+					const blend1 = new PIXI.Particle({
+						texture: tileSheet.textures[base],
+						x : X - 2,
+						y : Y - 2,
+						scaleX: 1.5,
+						scaleY: 1.5,
+						alpha: 0.2,
+					})
+					const blend2 = new PIXI.Particle({
+						texture: tileSheet.textures[base],
+						x : X - 1,
+						y : Y - 1,
+						scaleX: 1.25,
+						scaleY: 1.25,
+						alpha: 0.3,
+					})
+					const tileParticle = new PIXI.Particle({
+						texture: tileSheet.textures[code],
+						x : X,
+						y : Y,
+					})
+
+					tileContainer.addParticle(blend1)
+					tileContainer.addParticle(blend2)
+					tileContainer.addParticle(tileParticle)
+				}
+
+				for (let tile of cell.tiles) {
+					let x = tile.x
+					let y = tile.y
+					let value = tile.value
+
+					addTile(x, y, value)
+				}
+				
+				app.stage.addChild(tileContainer)
+			}
+
+			async function init() {
+				await app.init(
+				{
+					background : "#1f1f1f",
+					width:  window.innerWidth,
+					height: window.innerHeight,
+				})
+				document.body.appendChild(app.canvas)
+
+				let tileSheet = await Assets.load("assets/tiles.png")
+				tileSheet.source.scaleMode = "nearest"
+				Assets.add({
+					alias: 'tiles',
+					src: 'assets/tiles.json',
+					data: { texture: tileSheet }
+				})
+				
+				app.stage.scale = SCALE
+			}
+			
+			init()
+		</script>
+		<script id="mouseevents">
+			function scroll(event) {
+				let delta = (100 - event.deltaY) / 100
+				let newScale = app.stage.scale._x * delta
+
+				newScale = Math.min(100, newScale)
+				newScale = Math.max(1, newScale)
+				app.stage.scale = newScale
+			}
+
+			let dragging = false
+			let lastX = 0
+			let lastY = 0
+			function startDrag(event) {
+				dragging = true
+				lastX = event.clientX
+				lastY = event.clientY
+			}
+
+			const localize = (_x, _y) => {
+				let x = _x / app.stage.scale._x
+				x -= app.stage.x / app.stage.scale._x
+				x /= PIXEL
+				x = Math.floor(x)
+
+				let y = _y / app.stage.scale._y
+				y -= app.stage.y / app.stage.scale._y
+				y /= PIXEL
+				y = Math.floor(y)
+
+				return {
+					x: x,
+					y: y,
+				}
+			}
+			function move(event) {
+				if (dragging) {
+					let deltaX = event.clientX - lastX
+					let deltaY = event.clientY - lastY
+					lastX = event.clientX
+					lastY = event.clientY
+
+					app.stage.x += deltaX
+					app.stage.y += deltaY
+				}
+				else {
+					let { x: x, y: y } = localize(event.clientX, event.clientY)
+					sendCoordinates(x, y)
+				}
+			}
+
+			function endDrag(event) {
+				dragging = false
+			}
+ 
+			window.addEventListener("wheel", scroll)
+			window.addEventListener('pointerdown', startDrag)
+			window.addEventListener('pointerup', endDrag)
+			window.addEventListener('pointercancel', endDrag)
+			window.addEventListener('pointermove', move)
+			window.addEventListener('touchstart', (e) => e.preventDefault())
+		</script>
+	</body>
+</html>
