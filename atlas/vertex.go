@@ -5,13 +5,22 @@ type Vertex struct {
 	cells [3]*Cell
 }
 
-func NewVertex(triangle Triangle, cells map[Point]*Cell) Vertex {
-	return Vertex{
+func (world *World) newVertices(triangle Triangle) {
+	vertex := Vertex{
 		location: triangle.center,
 		cells: [3]*Cell{
-			cells[triangle.Points[0]],
-			cells[triangle.Points[1]],
-			cells[triangle.Points[2]],
+			world.cellByOrigin[triangle.Points[0]],
+			world.cellByOrigin[triangle.Points[1]],
+			world.cellByOrigin[triangle.Points[2]],
 		},
+	}
+	
+	for _, cell := range vertex.cells {
+		if cell == nil {
+			return
+		}
+	}
+	for _, cell := range vertex.cells {
+		cell.vertices = append(cell.vertices, vertex)
 	}
 }

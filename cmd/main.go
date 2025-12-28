@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"atlas/atlas"
 	"github.com/gorilla/websocket"
+	"time"
 )
 
 var world *atlas.World
@@ -23,6 +24,7 @@ func enableCors(w http.ResponseWriter) {
 
 type Client struct {
 	seen map[atlas.Point]bool
+	lastRequest time.Time
 }
 
 type Data struct {
@@ -33,6 +35,7 @@ type Data struct {
 func sendChunks(conn *websocket.Conn) {
 	client := Client{
 		seen: make(map[atlas.Point]bool),
+		lastRequest: time.Now(),
 	}
 	
 	for {
@@ -45,20 +48,25 @@ func sendChunks(conn *websocket.Conn) {
 			return
 		}
 		
-		cell := world.GetNearestCell(atlas.Point{
-			json.X,
-			json.Y,
-		})
-		
-		if !client.seen[cell.Origin] {
-			client.seen[cell.Origin] = true
-			fmt.Println(cell.GetAdjacentCells())
-			err = conn.WriteJSON(cell)
+		if time.Since(client.lastRequest) > 100 * time.Millisecond {
+			cell := world.GetNearestCell(atlas.Point{
+				json.X,
+				json.Y,
+			})
 			
-			if err != nil {
-				fmt.Println(err)
-				conn.Close()
-				return
+			client.lastRequest = time.Now()
+			if !client.seen[cell.Origin] {
+				client.seen[cell.Origin] = true
+				
+				for _, adj := range append(cell.GetAdjacentCells(), cell) {
+					err = conn.WriteJSON(adj)
+					
+					if err != nil {
+						fmt.Println(err)
+						conn.Close()
+						return
+					}
+				}
 			}
 		}
 	}
@@ -75,7 +83,7 @@ func handler (w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	world = atlas.GenerateWorld(200)
+	world = atlas.GenerateWorld()
 	
 	fmt.Println("Listening on 8082")
 	http.HandleFunc("/atlas", handler)

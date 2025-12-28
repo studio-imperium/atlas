@@ -34,9 +34,8 @@
 			}
 			
 			const sendCoordinates = (x, y) => {
-				if (CONNECTED && !seen[x + y*1000]) {
+				if (CONNECTED) {
 					console.log("sending")
-					seen[x + y*1000] = true
 					socket.send(`{ "x": ${x}, "y": ${y} }`)
 				}
 			}
@@ -90,8 +89,7 @@
 			window.__PIXI_DEVTOOLS__ = {
 			  app: app
 			}
-
-			let seen = {}
+			
 			async function render(cell) {
 				const tileSheet = await Assets.load("tiles")
 				const tileContainer = new PIXI.ParticleContainer({
@@ -104,7 +102,6 @@
 				})
 
 				function addTile(x, y, value) {
-					seen[x + y * 1000] = true
 					const code = codify(value)
 					const base = codify(value, 0)
 					const X = x * PIXEL
@@ -172,11 +169,11 @@
 		</script>
 		<script id="mouseevents">
 			function scroll(event) {
-				let delta = (100 - event.deltaY) / 100
-				let newScale = app.stage.scale._x * delta
+				let delta = event.deltaY < 0 ? 1 : -1
+				let newScale = app.stage.scale._x + delta
 
 				newScale = Math.min(100, newScale)
-				newScale = Math.max(1, newScale)
+				newScale = Math.max(0.5, newScale)
 				app.stage.scale = newScale
 			}
 
@@ -205,6 +202,8 @@
 					y: y,
 				}
 			}
+
+			let last = Date.now()
 			function move(event) {
 				if (dragging) {
 					let deltaX = event.clientX - lastX
@@ -215,9 +214,10 @@
 					app.stage.x += deltaX
 					app.stage.y += deltaY
 				}
-				else {
+				else if (Date.now() - last > 100) {
 					let { x: x, y: y } = localize(event.clientX, event.clientY)
 					sendCoordinates(x, y)
+					last = Date.now()
 				}
 			}
 

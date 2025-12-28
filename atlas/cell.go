@@ -1,10 +1,14 @@
 package atlas
 
+import "sync"
+
 type Cell struct {
 	vertices []Vertex
 	
 	Origin Point
 	Tiles []Tile `json:"tiles"`
+	
+	mu sync.Mutex
 }
 
 func NewCell(origin Point) Cell {

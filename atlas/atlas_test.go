@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
-func test(t * testing.T) {
-	fmt.Println(atlas.GenerateData())
+func TestTriangles(t * testing.T) {
+	triangles := GenerateWorld(10)
+	
+	t.Errorf("Triangles are: %s", fmt.Sprintln(triangles))
 }
