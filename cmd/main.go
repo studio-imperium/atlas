@@ -83,7 +83,7 @@ func handler (w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	world = atlas.GenerateWorld()
+	world = atlas.TemplateWorld(300)
 	
 	fmt.Println("Listening on 8082")
 	http.HandleFunc("/atlas", handler)
