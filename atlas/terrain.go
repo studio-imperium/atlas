@@ -92,6 +92,42 @@ func NewBase() Modifier {
 	}
 }
 
+func NewCropCircle(angles float64, values ...int8) Modifier {
+	valuesLength := float64(len(values))
+	
+	getValue := func(x int, y int, angle float64) float64 {
+		angledX := math.Cos(angle) * float64(x)
+		angledY := math.Sin(angle) * float64(y)
+		return math.Cos(angledX + angledY)
+	}
+	
+	quasiCrystal := func(x int, y int) int8 {
+		var value float64
+		angle := 2.0 * 3.14156
+		delta := angle / angles
+		
+		for i := 0; float64(i) < angles; i++ {
+			value += getValue(x, y, angle)
+			angle -= delta
+		}
+		
+		tileVal := value / angles
+		tileVal += 1.0
+		tileVal /= 2.0
+		//Now tileval is between 0 and 1
+		tileVal *= valuesLength
+		
+		return values[int(math.Floor(tileVal)) % len(values)]
+	}
+	
+	return func(cell *Cell) {
+		for idx := range cell.Tiles {
+			tile := &(cell.Tiles[idx])
+			tile.Value = quasiCrystal(tile.X, tile.Y)
+		}
+	}
+}
+
 func NewVoronoi(density int, values ...int8) Modifier {	
 	return func(cell *Cell) {
 		rnd := rand.New(rand.NewSource(int64(density)))

@@ -27,7 +27,17 @@ func TemplateWorld(size int) *World {
 		},
 		Biome{
 			[]Modifier{
-				NewVoronoi(10, 6,6,7,7,7,7,8),
+				NewCropCircle(50, 2,4),
+			},
+		},
+		Biome{
+			[]Modifier{
+				NewCropCircle(50, 5,4),
+			},
+		},
+		Biome{
+			[]Modifier{
+				NewVoronoi(40, 6,6,6,7,6,8),
 				NewSelectiveBorder(7,6),
 			},
 		},
@@ -38,11 +48,16 @@ func TemplateWorld(size int) *World {
 				NewBorder(8),
 			},
 		},
+		Biome{
+			[]Modifier{
+				NewCropCircle(5, 8,7),
+			},
+		},
 	}
 	
 	world := newWorld(2 * size, size, 5)
-	world.infect(biomes, 0.3)
-	world.infect(biomes, 0.2)
+	world.infect(biomes, 0.5)
+	world.infect(biomes, 0.5)
 	
 	fmt.Println(world.Cells[0].biome)
 	
