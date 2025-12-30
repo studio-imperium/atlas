@@ -1,31 +1,33 @@
 package atlas
 
-import "sync"
+import (
+	"sync"
+)
 
 type Cell struct {
 	vertices []Vertex
-	value int8
+	biome int8
 	
 	Origin Point
 	Tiles []Tile `json:"tiles"`
 	
+	grid map[Point]*Tile
 	mu sync.Mutex
 }
 
 func NewCell(origin Point) *Cell {
 	return &Cell{
-		value: 0,
+		biome: 0,
 		vertices: []Vertex{},
 		Origin: origin,
-		Tiles: []Tile{},
+		Tiles: []Tile{},	
+		grid: make(map[Point]*Tile),					
 	}
 }
 
-func (cell *Cell) setValue(value int8) {
-	cell.value = value
-	for idx := range cell.Tiles {
-		tile := &(cell.Tiles[idx])
-		tile.Value = value
+func (cell *Cell) griddify() {
+	for idx, tile := range cell.Tiles {
+		cell.grid[newPoint(tile.X, tile.Y)] = &cell.Tiles[idx]
 	}
 }
 

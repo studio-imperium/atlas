@@ -90,4 +90,8 @@ func (world *World) fillCells() {
 		go assignCol(x, world)
 	}
 	wg.Wait()
+	
+	for _, cell := range world.Cells {
+		cell.griddify()
+	}
 }

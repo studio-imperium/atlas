@@ -9,6 +9,10 @@ type Point struct {
 	Y float64 `json:"y"`
 }
 
+func newPoint(x int, y int) Point {
+	return Point{float64(x), float64(y)}
+}
+
 func (p1 Point) add(p2 Point) Point {
 	return Point{
 		X: p1.X + p2.X,

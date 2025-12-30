@@ -23,6 +23,7 @@ func enableCors(w http.ResponseWriter) {
 }
 
 type Client struct {
+	visited map[atlas.Point]bool
 	seen map[atlas.Point]bool
 	lastRequest time.Time
 }
@@ -34,6 +35,7 @@ type Data struct {
 
 func sendChunks(conn *websocket.Conn) {
 	client := Client{
+		visited: make(map[atlas.Point]bool),
 		seen: make(map[atlas.Point]bool),
 		lastRequest: time.Now(),
 	}
@@ -55,16 +57,19 @@ func sendChunks(conn *websocket.Conn) {
 			})
 			
 			client.lastRequest = time.Now()
-			if !client.seen[cell.Origin] {
-				client.seen[cell.Origin] = true
+			if !client.visited[cell.Origin] {
+				client.visited[cell.Origin] = true
 				
 				for _, adj := range append(cell.GetAdjacentCells(), cell) {
-					err = conn.WriteJSON(adj)
-					
-					if err != nil {
-						fmt.Println(err)
-						conn.Close()
-						return
+					if !client.seen[adj.Origin] {
+						client.seen[adj.Origin] = true
+						err = conn.WriteJSON(adj)
+						
+						if err != nil {
+							fmt.Println(err)
+							conn.Close()
+							return
+						}
 					}
 				}
 			}
@@ -83,7 +88,7 @@ func handler (w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	world = atlas.TemplateWorld(300)
+	world = atlas.TemplateWorld(500)
 	
 	fmt.Println("Listening on 8082")
 	http.HandleFunc("/atlas", handler)
