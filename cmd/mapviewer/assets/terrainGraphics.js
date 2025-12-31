@@ -2,8 +2,12 @@
 const PIXEL = 8
 const SCALE = 6
 const assets = {}
+const tileLayer = new PIXI.RenderLayer()
+const obstacleLayer = new PIXI.RenderLayer()
 const app = new PIXI.Application
 app.stage.scale = SCALE
+app.stage.addChild(tileLayer)
+app.stage.addChild(obstacleLayer)
 
 async function init() {
     await app.init({
@@ -15,8 +19,8 @@ async function init() {
     document.body.appendChild(app.canvas)
 }
 
-// Create the default tile spritesheet
-let rows = [
+// Create the default terrain spritesheet
+const tileRows = [
     [
         {
             id: "DEEPWATER [0]",
@@ -81,15 +85,6 @@ let rows = [
         }
     ]
 ]
-let tileData = {
-    frames : {},
-    meta : {
-        image: "tiles.png",
-        format: "RGBA8888",
-        size: { w: 256, h: 256},
-        scale: 1
-    }
-}
 let tileVariations = {}
 
 function randi() {
@@ -101,23 +96,33 @@ function force2Digits(n) {
     return str.padStart(2, "0")
 }
 
-function codify(tileInt, variation = randi() % tileVariations[tileInt]) {
-    let code = force2Digits(tileInt)
+function codify(value, variation = randi() % tileVariations[value]) {
+    let code = force2Digits(value)
     return code + "_" + force2Digits(variation)
 }
 
 async function initTiles(){
+    let tileData = {
+        frames : {},
+        meta : {
+            image: "tiles.png",
+            format: "RGBA8888",
+            size: { w: 256, h: 256},
+            scale: 1
+        }
+    }
     let id = 0
     let x = 0
     let y = 0
-    for (let row of rows) { 
+    
+    for (let row of tileRows) { 
         for (let tile of row) {
             let variationCount = 0
             for (let i = 0; i < tile.variations; i++) {
                 for (let j = 0; j < tile.weights[i]; j++) {
-                    let tileCode = force2Digits(id) + "_" + force2Digits(variationCount)
+                    const code = force2Digits(id) + "_" + force2Digits(variationCount)
 
-                    tileData.frames[tileCode] = {
+                    tileData.frames[code] = {
                         frame: {x: x * PIXEL, y: y * PIXEL, w: PIXEL, h: PIXEL},
                         sourceSize: {w: PIXEL, h: PIXEL},
                         spriteSourceSize: {x: 0, y: 0, w: PIXEL, h: PIXEL},
@@ -135,13 +140,11 @@ async function initTiles(){
     }
 
     const tilesTexture = await PIXI.Assets.load("assets/tiles.png")
-    const tiles = new PIXI.Spritesheet(tilesTexture, tileData)
-    console.log(tiles)
-    tiles.parse()
-    tiles.textureSource.source.scaleMode = "nearest"
-    assets.tiles = tiles
+    const tilesSheet = new PIXI.Spritesheet(tilesTexture, tileData)
+    tilesSheet.parse()
+    tilesSheet.textureSource.source.scaleMode = "nearest"
+    assets.tiles = tilesSheet
 }
-
 
 
 // Render a whole cell (tiles + environment)
@@ -198,6 +201,7 @@ async function render(cell) {
     }
     
     app.stage.addChild(tileContainer)
+    tileLayer.attach(tileContainer)
 }
 
 init()

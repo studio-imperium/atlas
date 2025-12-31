@@ -8,15 +8,7 @@ import (
 
 type Modifier func(*Cell)
 
-type Biome struct {
-	modifiers []Modifier
-}
-
-func (biome *Biome) SetModifier(idx int, mod Modifier) {
-	biome.modifiers[idx] = mod
-}
-
-func (world *World) infect(biomes []Biome, decay float64) {
+func (world *World) Infect(biomes []Biome, decay float64) {
 	
 	// Get "patient 0"
 	idx := world.rnd.Int() % len(world.Cells)
@@ -83,11 +75,11 @@ func (world *World) infect(biomes []Biome, decay float64) {
 
 // Modifiers
 
-func NewBase() Modifier {
+func NewFill(value int8) Modifier {
 	return func(cell *Cell) {
 		for idx := range cell.Tiles {
 			tile := &(cell.Tiles[idx])
-			tile.Value = cell.biome
+			tile.Value = value
 		}
 	}
 }
@@ -259,6 +251,41 @@ func NewSelectiveBorder(border int8, around int8,) Modifier {
 			tile := &(cell.Tiles[idx])
 			
 			if tile.Value == around && isBorder(cell, tile) {
+				toChange = append(toChange, tile)
+			}
+		}
+		
+		for _, tile := range toChange {
+			tile.Value = border
+		}
+	}
+}
+
+func NewSelectiveExternalBorder(border int8, around int8,) Modifier {
+	return func(cell *Cell) {
+		isBorder := func(cell *Cell, tile *Tile) bool {
+			x := tile.X
+			y := tile.Y
+			adj := [4]Point{
+				newPoint(x - 1, y),
+				newPoint(x + 1, y),
+				newPoint(x, y + 1),
+				newPoint(x, y - 1),
+			}
+			for _, pt := range adj {
+				if cell.grid[pt] != nil && cell.grid[pt].Value == around {
+					return true
+				}
+			}
+			
+			return false
+		}
+		
+		toChange := []*Tile{}
+		for idx := range cell.Tiles {
+			tile := &(cell.Tiles[idx])
+			
+			if tile.Value != around && isBorder(cell, tile) {
 				toChange = append(toChange, tile)
 			}
 		}

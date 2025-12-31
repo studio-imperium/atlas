@@ -20,14 +20,14 @@ func NewCell(origin Point) *Cell {
 		biome: 0,
 		vertices: []Vertex{},
 		Origin: origin,
-		Tiles: []Tile{},	
+		Tiles: []Tile{},
 		grid: make(map[Point]*Tile),					
 	}
 }
 
 func (cell *Cell) griddify() {
 	for idx, tile := range cell.Tiles {
-		cell.grid[newPoint(tile.X, tile.Y)] = &cell.Tiles[idx]
+		cell.grid[tile.point()] = &cell.Tiles[idx]
 	}
 }
 

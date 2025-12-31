@@ -5,100 +5,101 @@ func NewWorld(size int, density int, seed int64) *World {
 	return world
 }
 
-//"deepWater" : 0,
-//"water" : 1,
-//"grass" : 2,
-//dirt : 3
-//"sand" : 4,
-//"sandstone" : 5,
-//"dryGrass" : 6,
-//"coals" : 7,
-//"ruins" : 8,
-//"snow" : 9,
-//ice : 10
-
-func TemplateWorld(size int) *World {
-	biomes := []Biome{
-		Biome{
-			[]Modifier{
-				NewCropCircle(6.3, 7,9),
-				NewSelectiveBorder(9,10),
-				NewSelectiveBorder(8,7),
-				NewBorder(10),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewVoronoi(40, 7,8,8,9,10),
-				NewSelectiveBorder(8,9),
-				NewSelectiveBorder(9,10),
-				NewBorder(9),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewVoronoi(40, 7,7,8,8,8,8,8,9),
-				NewSelectiveBorder(8,9),
-				NewBorder(9),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewVoronoi(40, 7,7,8,8,9),
-				NewSelectiveBorder(8,9),
-				NewBorder(8),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewCropCircle(30, 4,5),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewVoronoi(40, 4,5,6),
-				NewSelectiveBorder(5,6),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewCropCircle(4.7, 6,4),
-				NewSelectiveBorder(5,4),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewPattern(3.2, 6,5),
-				NewBorder(5),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewPattern(3.2, 2,8),
-				NewBorder(8),
-			},
-		},
-		Biome{
-			[]Modifier{
-				NewCropCircle(20, 1,2),
-				NewSelectiveBorder(8,1),
-			},
-		},
-	}
-	
-	world := newWorld(size, size, 5)
-	world.infect(biomes, 0.7)
-	
+func NewTemplateWorld(size int) *World {
+	world := newWorld(size, size, 0)
 	return world
 }
 
-func NewBiomes(biomes int8) []Biome {
-	biome := make([]Biome, biomes)
-	
-	for idx := range biome {
-		biome[idx] = Biome{[]Modifier{NewBase()}}
-	}
-	
-	return biome
+
+// Tiles
+var DEEPWATER int8 = 0
+var WATER int8 = 1
+var GRASS int8 = 2
+var STONE int8 = 3
+var SAND int8 = 4
+var SANDSTONE int8 = 5
+var DRYGRASS int8 = 6
+var RUBBLE int8 = 7
+var DARKSTONE int8 = 8
+var SNOW int8 = 9
+var ICE int8 = 10
+
+var OceanMap []Biome = []Biome{
+	NewBiome(
+		NewFill(DEEPWATER),
+	),
+	NewBiome(
+		NewFill(WATER),
+	),
 }
 
+var IslandMap []Biome = []Biome{
+	NewBiome(
+		NewFill(DEEPWATER),
+	),
+	NewBiome(
+		NewFill(WATER),
+	),
+	NewBiome(
+		NewFill(SAND),
+	),
+	NewBiome(
+		NewFill(GRASS),
+	),
+	NewBiome(
+		NewFill(GRASS),
+	),
+	NewBiome(
+		NewFill(GRASS),
+	),
+}
+
+var DesertMountainsMap []Biome = []Biome{
+	NewBiome(
+		NewPattern(27, RUBBLE, SNOW),
+		NewSelectiveBorder(SNOW, ICE),
+		NewSelectiveBorder(DARKSTONE, RUBBLE),
+		NewBorder(ICE),
+		NewSelectiveExternalBorder(SNOW, ICE),
+	),
+	NewBiome(
+		NewVoronoi(40, RUBBLE,DARKSTONE,DARKSTONE,SNOW,ICE),
+		NewSelectiveBorder(DARKSTONE,SNOW),
+		NewSelectiveBorder(SNOW,ICE),
+		NewBorder(SNOW),
+	),
+	NewBiome(
+		NewVoronoi(40, RUBBLE,RUBBLE,DARKSTONE,DARKSTONE,DARKSTONE,DARKSTONE,DARKSTONE,SNOW),
+		NewSelectiveBorder(DARKSTONE,SNOW),
+		NewBorder(SNOW),
+	),
+	NewBiome(
+		NewVoronoi(40, RUBBLE,RUBBLE,DARKSTONE,DARKSTONE,SNOW),
+		NewSelectiveBorder(DARKSTONE,SNOW),
+		NewBorder(DARKSTONE),
+	),
+	NewBiome(
+		NewCropCircle(40, DRYGRASS,SAND),
+		NewSelectiveBorder(SANDSTONE,SAND),
+		NewSelectiveBorder(SAND,DRYGRASS),
+		NewSelectiveBorder(SAND,DRYGRASS),
+		NewSelectiveBorder(SAND,DRYGRASS),
+		NewSelectiveBorder(SANDSTONE,SAND),
+	),
+	NewBiome(
+		NewVoronoi(40, SAND,SANDSTONE,DRYGRASS),
+		NewSelectiveBorder(SANDSTONE,DRYGRASS),
+	),
+	NewBiome(
+		NewPattern(5, DRYGRASS,SAND),
+		NewSelectiveBorder(SANDSTONE,SAND),
+	),
+	NewBiome(
+		NewPattern(3.2, GRASS,STONE),
+		NewBorder(STONE),
+	),
+	NewBiome(
+		NewCropCircle(20, WATER,GRASS),
+		NewSelectiveBorder(STONE,WATER),
+	),
+}

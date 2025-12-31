@@ -15,7 +15,7 @@ type World struct {
 	Size int `json:"size"`
 }
 
-func newWorld(density int, size int, seed int64) *World {
+func newWorld(size int, density int, seed int64) *World {
 	world := &World{
 		rnd: rand.New(rand.NewSource(seed)),
 		points: make([]Point, density),
