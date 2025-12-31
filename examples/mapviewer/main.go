@@ -82,9 +82,102 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	go sendChunks(conn)
 }
 
+// Tiles
+var DEEPWATER int8 = 0
+var WATER int8 = 1
+var GRASS int8 = 2
+var STONE int8 = 3
+var SAND int8 = 4
+var SANDSTONE int8 = 5
+var DRYGRASS int8 = 6
+var RUBBLE int8 = 7
+var DARKSTONE int8 = 8
+var SNOW int8 = 9
+var ICE int8 = 10
+
+var OceanMap []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewFill(DEEPWATER),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(WATER),
+	),
+}
+
+var IslandMap []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewFill(DEEPWATER),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(WATER),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(SAND),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
+	),
+}
+
+var DesertMountainsMap []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewPattern(27, RUBBLE, SNOW),
+		atlas.NewSelectiveBorder(SNOW, ICE),
+		atlas.NewSelectiveBorder(DARKSTONE, RUBBLE),
+		atlas.NewBorder(ICE),
+		atlas.NewSelectiveExternalBorder(SNOW, ICE),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, RUBBLE, DARKSTONE, DARKSTONE, SNOW, ICE),
+		atlas.NewSelectiveBorder(DARKSTONE, SNOW),
+		atlas.NewSelectiveBorder(SNOW, ICE),
+		atlas.NewBorder(SNOW),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, RUBBLE, RUBBLE, DARKSTONE, DARKSTONE, DARKSTONE, DARKSTONE, DARKSTONE, SNOW),
+		atlas.NewSelectiveBorder(DARKSTONE, SNOW),
+		atlas.NewBorder(SNOW),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, RUBBLE, RUBBLE, DARKSTONE, DARKSTONE, SNOW),
+		atlas.NewSelectiveBorder(DARKSTONE, SNOW),
+		atlas.NewBorder(DARKSTONE),
+	),
+	atlas.NewBiome(
+		atlas.NewCropCircle(40, DRYGRASS, SAND),
+		atlas.NewSelectiveBorder(SANDSTONE, SAND),
+		atlas.NewSelectiveBorder(SAND, DRYGRASS),
+		atlas.NewSelectiveBorder(SAND, DRYGRASS),
+		atlas.NewSelectiveBorder(SAND, DRYGRASS),
+		atlas.NewSelectiveBorder(SANDSTONE, SAND),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, SAND, SANDSTONE, DRYGRASS),
+		atlas.NewSelectiveBorder(SANDSTONE, DRYGRASS),
+	),
+	atlas.NewBiome(
+		atlas.NewPattern(5, DRYGRASS, SAND),
+		atlas.NewSelectiveBorder(SANDSTONE, SAND),
+	),
+	atlas.NewBiome(
+		atlas.NewPattern(3.2, GRASS, STONE),
+		atlas.NewBorder(STONE),
+	),
+	atlas.NewBiome(
+		atlas.NewCropCircle(20, WATER, GRASS),
+		atlas.NewSelectiveBorder(STONE, WATER),
+	),
+}
+
 func main() {
 	world = atlas.NewTemplateWorld(500)
-	world.Infect(atlas.DesertMountainsMap, 0.7)
+	world.Infect(DesertMountainsMap, 0.7)
 
 	fmt.Println("Listening on 8082")
 	http.HandleFunc("/atlas", handler)
