@@ -12,7 +12,7 @@ World instead has a Cells property, each cell containing their respective tiles 
 
 ### Examples
 
-[![map1](https://williamqm.com/writing/mapgen/map1.png)]
+![map1](https://williamqm.com/writing/mapgen/map12.png)
 
 
 
