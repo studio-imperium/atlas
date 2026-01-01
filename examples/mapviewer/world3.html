@@ -1,0 +1,131 @@
+<html style="padding: 0; margin: 0;">
+	<head>
+		<title>atlas.imperium</title>
+	</head>
+	<body style="padding: 0; margin: 0;">
+		<script src="assets/pixi.js"></script>
+		<script id="connector">
+			let CONNECTED = false
+			let socket
+			
+			const connect = () => {
+				socket = new WebSocket("ws://127.0.0.1:8082/world3")
+				
+				function open() {
+					start()
+					CONNECTED = true
+				}
+				
+				function closed(e) {
+					console.log(e)
+					end("Connection failed")
+					CONNECTED = false
+				}
+				
+				function newCell(e) {
+					let cell = JSON.parse(e.data)
+					render(cell)
+				}
+				
+				socket.addEventListener("open", open)
+				socket.addEventListener("close", closed)
+				socket.addEventListener("error", closed)
+				socket.addEventListener("message", newCell)
+			}
+			
+			const sendCoordinates = (x, y) => {
+				if (CONNECTED) {
+					console.log("sending")
+					socket.send(`{ "x": ${x}, "y": ${y} }`)
+				}
+			}
+			
+			const end = (message) => {
+				// document.getElementById("status").innerHTML = message
+			}
+			
+			const start = () => {
+				// document.getElementById("status").innerHTML = "Scroll to zoom out, move mouse to load cells"
+			}
+			
+			connect()
+		</script>
+		<script src="assets/terrainGraphics.js"></script>
+		<script id="mouseevents">
+			function scroll(event) {
+				const delta = event.deltaY < 0 ? 1 : -1
+				const oldScale = app.stage.scale.x
+				let newScale = oldScale + delta
+				newScale = Math.min(64, newScale)
+				newScale = Math.max(0.7, newScale)
+
+				const centerX = app.renderer.width / 2
+				const centerY = app.renderer.height / 2
+				const worldCenter = {
+					x: (centerX - app.stage.position.x) / oldScale,
+					y: (centerY - app.stage.position.y) / oldScale
+				}
+				app.stage.scale.set(newScale)
+				app.stage.position.set(
+					centerX - worldCenter.x * newScale,
+					centerY - worldCenter.y * newScale,
+				)
+			}
+
+			let dragging = false
+			let lastX = 0
+			let lastY = 0
+			function startDrag(event) {
+				dragging = true
+				lastX = event.clientX
+				lastY = event.clientY
+			}
+
+			const localize = (_x, _y) => {
+				let x = _x / app.stage.scale._x
+				x -= app.stage.x / app.stage.scale._x
+				x /= PIXEL
+				x = Math.floor(x)
+
+				let y = _y / app.stage.scale._y
+				y -= app.stage.y / app.stage.scale._y
+				y /= PIXEL
+				y = Math.floor(y)
+
+				return {
+					x: x,
+					y: y,
+				}
+			}
+
+			let last = Date.now()
+			function move(event) {
+				if (dragging) {
+					let deltaX = event.clientX - lastX
+					let deltaY = event.clientY - lastY
+					lastX = event.clientX
+					lastY = event.clientY
+
+					app.stage.x += deltaX
+					app.stage.y += deltaY
+				}
+				else if (Date.now() - last > 100) {
+					let { x: x, y: y } = localize(event.clientX, event.clientY)
+					sendCoordinates(x, y)
+					last = Date.now()
+				}
+			}
+
+			function endDrag(event) {
+				dragging = false
+			}
+ 
+			window.addEventListener("wheel", scroll)
+			window.addEventListener('pointerdown', startDrag)
+			window.addEventListener('pointerup', endDrag)
+			window.addEventListener('pointercancel', endDrag)
+			window.addEventListener('pointermove', move)
+			window.addEventListener('touchstart', (e) => e.preventDefault())
+		</script>
+	</body>
+</html>

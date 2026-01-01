@@ -10,7 +10,6 @@ import (
 	"github.com/studio-imperium/atlas"
 )
 
-var world *atlas.World
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -28,7 +27,7 @@ type Data struct {
 	Y float64 `json:"y"`
 }
 
-func sendChunks(conn *websocket.Conn) {
+func sendChunks(conn *websocket.Conn, world *atlas.World) {
 	client := Client{
 		visited:     make(map[atlas.Point]bool),
 		seen:        make(map[atlas.Point]bool),
@@ -72,14 +71,16 @@ func sendChunks(conn *websocket.Conn) {
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+func newHandler(world *atlas.World) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
-	go sendChunks(conn)
+		go sendChunks(conn, world)
+	}
 }
 
 // Tiles
@@ -97,31 +98,31 @@ var ICE int8 = 10
 
 var OceanMap []atlas.Biome = []atlas.Biome{
 	atlas.NewBiome(
-		atlas.NewFill(DEEPWATER),
+		atlas.NewFill(WATER),
 	),
 	atlas.NewBiome(
-		atlas.NewFill(WATER),
+		atlas.NewFill(DEEPWATER),
 	),
 }
 
 var IslandMap []atlas.Biome = []atlas.Biome{
 	atlas.NewBiome(
-		atlas.NewFill(DEEPWATER),
+		atlas.NewFill(GRASS),
 	),
 	atlas.NewBiome(
-		atlas.NewFill(WATER),
+		atlas.NewFill(GRASS),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
 	),
 	atlas.NewBiome(
 		atlas.NewFill(SAND),
 	),
 	atlas.NewBiome(
-		atlas.NewFill(GRASS),
+		atlas.NewFill(WATER),
 	),
 	atlas.NewBiome(
-		atlas.NewFill(GRASS),
-	),
-	atlas.NewBiome(
-		atlas.NewFill(GRASS),
+		atlas.NewFill(DEEPWATER),
 	),
 }
 
@@ -185,11 +186,178 @@ var DesertMountainsMap []atlas.Biome = []atlas.Biome{
 	),
 }
 
+var Sandy []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewCropCircle(3.2, DRYGRASS, SAND),
+		atlas.NewSelectiveBorder(SANDSTONE, SAND),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, SAND, SANDSTONE, DRYGRASS),
+		atlas.NewSelectiveBorder(SANDSTONE, DRYGRASS),
+	),
+	atlas.NewBiome(
+		atlas.NewCropCircle(40, DRYGRASS, SAND),
+		atlas.NewSelectiveBorder(SANDSTONE, SAND),
+		atlas.NewSelectiveBorder(SAND, DRYGRASS),
+		atlas.NewSelectiveBorder(SAND, DRYGRASS),
+		atlas.NewSelectiveBorder(SAND, DRYGRASS),
+		atlas.NewSelectiveBorder(SANDSTONE, SAND),
+	),
+}
+
+var Snowy []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, RUBBLE, RUBBLE, DARKSTONE, DARKSTONE, SNOW),
+		atlas.NewSelectiveBorder(DARKSTONE, SNOW),
+		atlas.NewBorder(DARKSTONE),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, RUBBLE, RUBBLE, DARKSTONE, DARKSTONE, DARKSTONE, DARKSTONE, DARKSTONE, SNOW),
+		atlas.NewSelectiveBorder(DARKSTONE, SNOW),
+		atlas.NewBorder(SNOW),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(40, RUBBLE, DARKSTONE, DARKSTONE, SNOW, ICE),
+		atlas.NewSelectiveBorder(DARKSTONE, SNOW),
+		atlas.NewSelectiveBorder(SNOW, ICE),
+		atlas.NewBorder(SNOW),
+	),
+	atlas.NewBiome(
+		atlas.NewPattern(27, RUBBLE, SNOW),
+		atlas.NewSelectiveBorder(SNOW, ICE),
+		atlas.NewSelectiveBorder(DARKSTONE, RUBBLE),
+		atlas.NewBorder(ICE),
+		atlas.NewSelectiveExternalBorder(SNOW, ICE),
+	),
+	atlas.NewBiome(
+		atlas.NewPattern(27, ICE, WATER),
+		atlas.NewSelectiveBorder(WATER, ICE),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(WATER),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(DEEPWATER),
+	),
+}
+
+var PatternDemo []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewPattern(5, WATER,DEEPWATER),
+	),
+}
+
+var CropCircleDemo []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewCropCircle(5, WATER,DEEPWATER),
+	),
+}
+
+var VoronoiDemo []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewVoronoi(100, WATER,DEEPWATER),
+	),
+}
+
+// Islands
+var Islands1 []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewVoronoi(100, GRASS,DEEPWATER),
+		atlas.NewSelectiveExternalBorder(SAND,GRASS),
+		atlas.NewSelectiveBorder(WATER,SAND),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+	),
+}
+
+
+// Big islands
+var BorderDemo2 []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewFill(DEEPWATER),
+		atlas.NewBorder(WATER),
+	),
+}
+
+
+// Big islands
+var BorderDemo []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
+		atlas.NewSelectiveBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+		atlas.NewBorder(DEEPWATER),
+	),
+}
+
+// Funky islands
+var FunkyDemo []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewPattern(7, DEEPWATER,GRASS),
+		atlas.NewSelectiveExternalBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+	),
+}
+
+// Final demo
+var Final []atlas.Biome = []atlas.Biome{
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
+		atlas.NewSelectiveBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+		atlas.NewBorder(DEEPWATER),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
+		atlas.NewSelectiveBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+		atlas.NewBorder(DEEPWATER),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(GRASS),
+		atlas.NewSelectiveBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+		atlas.NewBorder(DEEPWATER),
+	),
+	atlas.NewBiome(
+		atlas.NewVoronoi(10, GRASS,DEEPWATER),
+		atlas.NewSelectiveExternalBorder(SAND,GRASS),
+		atlas.NewSelectiveBorder(WATER,SAND),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+	),
+	atlas.NewBiome(
+		atlas.NewPattern(7, DEEPWATER,GRASS),
+		atlas.NewSelectiveExternalBorder(WATER,GRASS),
+		atlas.NewSelectiveBorder(SAND,GRASS),
+	),
+	atlas.NewBiome(
+		atlas.NewFill(DEEPWATER),
+	),
+}
+
+
 func main() {
-	world = atlas.NewTemplateWorld(500)
-	world.Infect(DesertMountainsMap, 0.7)
+	world1 := atlas.NewWorld(200,200,21)
+	world1.Infect(Sandy, 0.2)
+	world2 := atlas.NewWorld(300,100,21)
+	world2.Infect(Snowy, 0.5)
+	world3 := atlas.NewWorld(50,1,21)
+	world3.Infect(Islands1, 0.5)
+	world4 := atlas.NewWorld(50,50,21)
+	world4.Infect(BorderDemo, 0.5)
+	world5 := atlas.NewWorld(50,50,21)
+	world5.Infect(FunkyDemo, 0.5)
+	world6 := atlas.NewWorld(100,100,3)
+	world6.Infect(Final, 1)
 
 	fmt.Println("Listening on 8082")
-	http.HandleFunc("/atlas", handler)
+	http.HandleFunc("/world1", newHandler(world1))
+	http.HandleFunc("/world2", newHandler(world2))
+	http.HandleFunc("/world3", newHandler(world3))
+	http.HandleFunc("/world4", newHandler(world4))
+	http.HandleFunc("/world5", newHandler(world5))
+	http.HandleFunc("/world6", newHandler(world6))
 	log.Fatal(http.ListenAndServe(":8082", nil))
 }

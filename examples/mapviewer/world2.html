@@ -9,7 +9,7 @@
 			let socket
 			
 			const connect = () => {
-				socket = new WebSocket("ws://localhost:8082/atlas")
+				socket = new WebSocket("ws://127.0.0.1:8082/world2")
 				
 				function open() {
 					start()
@@ -57,7 +57,7 @@
 				const oldScale = app.stage.scale.x
 				let newScale = oldScale + delta
 				newScale = Math.min(64, newScale)
-				newScale = Math.max(0.5, newScale)
+				newScale = Math.max(0.7, newScale)
 
 				const centerX = app.renderer.width / 2
 				const centerY = app.renderer.height / 2
