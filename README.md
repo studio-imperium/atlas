@@ -12,8 +12,11 @@ We instead use cells, each cell containing their respective tiles in Cell.Tiles.
 
 ### Examples
 
+[Live demo](http://100.28.2.231:6001/)
 ![map1](https://williamqm.com/writing/mapgen/map11.png)
+[Live demo](http://100.28.2.231:2000/)
 ![map1](https://williamqm.com/writing/mapgen/map12.png)
+[Live demo](http://100.28.2.231:1000/)
 ![map1](https://williamqm.com/writing/mapgen/map13.png)
 
 
