@@ -15,6 +15,11 @@ type Cell struct {
 	mu   sync.Mutex
 }
 
+// GetBiome returns the index of the biome assigned to the cell.
+func (cell *Cell) GetBiome() int8 {
+	return cell.biome
+}
+
 func NewCell(origin Point) *Cell {
 	return &Cell{
 		biome:    0,

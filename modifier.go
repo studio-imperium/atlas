@@ -8,11 +8,18 @@ import (
 
 type Modifier func(*Cell)
 
+// Infect spreads biomes from a random cell using the world's seeded random source.
 func (world *World) Infect(biomes []Biome, decay float64) {
-
-	// Get "patient 0"
 	idx := world.rnd.Int() % len(world.Cells)
-	origin := world.Cells[idx]
+	world.infect(biomes, decay, world.Cells[idx])
+}
+
+// InfectFrom spreads biomes from the cell nearest origin without consuming randomness.
+func (world *World) InfectFrom(biomes []Biome, decay float64, origin Point) {
+	world.infect(biomes, decay, world.GetNearestCell(origin))
+}
+
+func (world *World) infect(biomes []Biome, decay float64, origin *Cell) {
 
 	// Keep track of whom to infect
 	var changedCells []*Cell

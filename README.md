@@ -24,3 +24,26 @@ We instead use cells, each cell containing their respective tiles in Cell.Tiles.
 ### Installation
 
     go get github.com/studio-imperium/atlas
+
+### Choosing the biome origin
+
+`Infect` starts at a random cell using the world's seed. Use `InfectFrom` to
+start at the cell nearest a specific point, such as the center of an island:
+
+```go
+world := atlas.NewWorld(256, 100, 11)
+biomes := []atlas.Biome{
+    atlas.NewBiome(atlas.NewFill(2)),
+    atlas.NewBiome(atlas.NewFill(6)),
+    atlas.NewBiome(atlas.NewFill(1)),
+}
+center := atlas.Point{X: float64(world.Size / 2), Y: float64(world.Size / 2)}
+world.InfectFrom(biomes, 0.25, center)
+```
+
+`InfectFrom` uses the same spread and modifier rules as `Infect`, without
+advancing the world's random source. `cell.GetBiome()` returns the assigned
+biome index as `int8`; tile values also remain `int8`.
+
+For custom map exports, use each cell's position in `world.Cells` as its ID
+and place its tiles at `tile.X + tile.Y*world.Size` in a flat array.
